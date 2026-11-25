@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Berita - PP API Al-Huda Nepak</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }
+        body { background: #f4f7f5; color: #333; padding: 20px; }
+        .container { max-width: 600px; margin: 30px auto; background: #fff; padding: 30px; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); border-top: 6px solid #186639; }
+        h2 { color: #186639; margin-bottom: 5px; font-size: 1.5rem; }
+        p.sub { color: #666; font-size: 0.9rem; margin-bottom: 25px; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; color: #222; }
+        input[type="text"], input[type="password"], textarea, input[type="file"] {
+            width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem;
+        }
+        textarea { resize: vertical; min-height: 130px; }
+        button {
+            width: 100%; background: #186639; color: #fff; border: none; padding: 14px;
+            border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.3s;
+        }
+        button:hover { background: #124d2b; }
+        button:disabled { background: #999; cursor: not-allowed; }
+        #status { margin-top: 15px; text-align: center; font-weight: 500; font-size: 0.92rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Upload Berita Pondok</h2>
+    <p class="sub">Portal Admin Berita PP API Al-Huda Nepak</p>
+
+    <form id="beritaForm">
+        <div class="form-group">
+            <label>Password Admin</label>
+            <input type="password" id="password" placeholder="Masukkan password admin" required>
+        </div>
+        <div class="form-group">
+            <label>Judul Berita / Kegiatan</label>
+            <input type="text" id="judul" placeholder="Contoh: Peringatan Maulid Nabi Muhammad SAW" required>
+        </div>
+        <div class="form-group">
+            <label>Foto Utama Berita</label>
+            <input type="file" id="gambar" accept="image/*" required>
+        </div>
+        <div class="form-group">
+            <label>Isi Berita</label>
+            <textarea id="isi" placeholder="Tulis deskripsi kegiatan atau pengumuman di sini..." required></textarea>
+        </div>
+        <button type="submit" id="submitBtn">Publikasikan Berita</button>
+    </form>
+    <div id="status"></div>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydUyVZI0hd_vlS4l_Ig_7K2QD8pGk5nNHWwB5vQXxvZGkAl4tW8UWrn904CHSgG4Hf/exec"; // Ganti dengan URL Deployment Apps Script
+
+    document.getElementById("beritaForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const btn = document.getElementById("submitBtn");
+        const status = document.getElementById("status");
+        const fileInput = document.getElementById("gambar");
+        const file = fileInput.files[0];
+
+        if (!file) return;
+
+        btn.disabled = true;
+        btn.innerText = "Sedang mengupload...";
+        status.innerHTML = "";
+
+        const reader = new FileReader();
+        reader.onload = function() {
+            const payload = {
+                password: document.getElementById("password").value,
+                judul: document.getElementById("judul").value,
+                isi: document.getElementById("isi").value,
+                imageBase64: reader.result,
+                imageName: file.name,
+                imageType: file.type
+            };
+
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    status.style.color = "#186639";
+                    status.innerText = "✅ " + data.message;
+                    document.getElementById("beritaForm").reset();
+                } else {
+                    status.style.color = "#d32f2f";
+                    status.innerText = "❌ " + data.message;
+                }
+            })
+            .catch(err => {
+                status.style.color = "#d32f2f";
+                status.innerText = "❌ Terjadi kesalahan koneksi.";
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerText = "Publikasikan Berita";
+            });
+        };
+        reader.readAsDataURL(file);
+    });
+</script>
+
+</body>
+</html>
